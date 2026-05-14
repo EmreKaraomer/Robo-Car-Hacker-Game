@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Hapishane Kaçış: Robo-Hacker</title>
+    <style>
+        body {
+            background-color: #050505; color: #0f0;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex; flex-direction: column; align-items: center;
+            margin: 0; padding-top: 20px;
+        }
+
+        #oyun-alani {
+            position: relative; width: 800px; height: 600px;
+            border: 4px solid #0f0; box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            overflow: hidden;
+        }
+
+        canvas { display: block; background-color: #000; }
+
+        /* Ana Menü CSS */
+        #ana-menu {
+            position: absolute; inset: 0; background: rgba(0, 0, 0, 0.95);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100;
+        }
+        #ana-menu h1 { font-size: 48px; text-shadow: 0 0 15px #0f0; margin-bottom: 20px; margin-top: 0; }
+        
+        .zorluk-kutusu { margin-bottom: 20px; text-align: center; }
+        .zorluk-kutusu h3 { color: #ff0; margin-bottom: 10px; }
+        
+        .menu-buton {
+            background: #111; color: #0f0; border: 2px solid #0f0;
+            padding: 10px 20px; margin: 5px; font-size: 16px;
+            font-family: 'Courier New', Courier, monospace; font-weight: bold;
+            cursor: pointer; width: 150px; transition: 0.2s;
+        }
+        .menu-buton:hover { background: #0f0; color: #000; }
+        .sekme-buton { width: 235px; margin-top: 15px; }
+
+        .menu-icerik {
+            display: none; width: 600px; background: #111;
+            border: 1px solid #0f0; padding: 15px; margin-top: 15px;
+            font-size: 13px; line-height: 1.5;
+        }
+
+        /* Alt Arayüz */
+        #arayuz {
+            width: 800px; display: flex; justify-content: space-between;
+            background: #111; border: 2px solid #0f0; padding: 15px;
+            margin-top: 15px; box-sizing: border-box;
+        }
+        .bilgi-kutusu { flex: 1; text-align: center; border-right: 1px solid #0f0; }
+        .bilgi-kutusu:last-child { border-right: none; }
+
+        #bildirim {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9); border: 1px solid #0f0; padding: 10px 20px;
+            font-weight: bold; display: none; z-index: 5;
+        }
+
+        /* Kazı ve Kilit Mini Oyunu CSS */
+        .minigame-panel {
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95); border: 2px solid #0f0; padding: 25px;
+            width: 400px; text-align: center; z-index: 10;
+        }
+        .mg-bar { width: 100%; height: 30px; background: #222; margin: 20px 0; position: relative; border: 1px solid #444; }
+        .mg-target { position: absolute; left: 140px; width: 70px; height: 100%; background: rgba(0, 255, 0, 0.4); }
+        .mg-cursor { position: absolute; left: 0; width: 4px; height: 100%; background: #fff; box-shadow: 0 0 5px #fff; }
+
+        /* Kilit Pimleri */
+        #pim-konteyner { display: flex; justify-content: center; gap: 15px; margin: 15px 0; }
+        .pim { font-size: 24px; color: #555; }
+        .pim.aktif { color: #0f0; text-shadow: 0 0 10px #0f0; }
+
+        /* Oda Arama CSS */
+        #search-panel {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 400px; background: rgba(0,8,0,0.97); border: 2px solid #ffaa00;
+            box-shadow: 0 0 40px rgba(255,170,0,0.3); padding: 25px; z-index: 300; display: none;
+        }
+        #search-panel.visible { display: block; }
+        #search-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 15px 0; }
+        .search-cell {
+            height: 60px; background: #0a0800; border: 1px solid #442200;
+            display: flex; align-items: center; justify-content: center; font-size: 24px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .search-cell:hover { border-color: #ffaa00; background: #1a1000; }
+        .search-cell.revealed { background: #001a00; border-color: #00ff50; cursor: default; }
+
+    </style>
+</head>
+<body>
+
+    <div id="oyun-alani">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div id="ana-menu">
+            <h1>ROBO-HACKER</h1>
+            
+            <div class="zorluk-kutusu">
+                <h3>BİR ZORLUK SEÇEREK BAŞLA</h3>
+                <button class="menu-buton" onclick="oyunuBaslat('kolay')">KOLAY</button>
+                <button class="menu-buton" onclick="oyunuBaslat('normal')">NORMAL</button>
+                <button class="menu-buton" onclick="oyunuBaslat('zor')">ZOR</button>
+            </div>
+
+            <div>
+                <button class="menu-buton sekme-buton" onclick="menuSekmeGoster('kurallar')">GÖREV KURALLARI</button>
+                <button class="menu-buton sekme-buton" onclick="menuSekmeGoster('kontroller')">TUŞ KONTROLLERİ</button>
+            </div>
+            
+            <div id="sekme-kurallar" class="menu-icerik">
+                <h3 style="color: #ffaa00; margin-top: 0;">YENİ BÖLGELER & GÖREVLER</h3>
+                <p>1. Kapalı odalara (Kahverengi Kapılar) yaklaşarak <b>[R]</b> tuşuyla kilitleri kır!</p>
+                <p>2. <b>Ekipman (Mor)</b> veya <b>Toplantı (Turkuaz)</b> odalarına sızarak Lazer Kesici ve Harita gibi avantajlar elde edebilirsin.</p>
+                <p>3. Yemekhaneden (Mavi) kaşık bulup Alarmı (Kırmızı) sabote et.</p>
+                <p>4. Hücrene (Sarı) dön ve tüneli kazıp kaç!</p>
+            </div>
+            
+            <div id="sekme-kontroller" class="menu-icerik">
+                <h3 style="color: #0ff; margin-top: 0;">KONTROL SİSTEMİ</h3>
+                <p><b>W, A, S, D:</b> Aracı yönlendirir.</p>
+                <p><b>R Tuşu:</b> Odayla etkileşime girer (Kapı kır / Arama yap / Alarm kur).</p>
+                <p><b>E Tuşu:</b> Hücrede kazı oyununu başlatır.</p>
+                <p><b>BOŞLUK (Space):</b> Kilit kırma ve kazı oyununda çekiç vurur.</p>
+            </div>
+        </div>
+
+        <div id="bildirim">Sisteme Giriş Yapıldı.</div>
+
+        <div id="kazi-ekrani" class="minigame-panel">
+            <h2 style="margin-top:0;">TÜNEL KAZISI</h2>
+            <p>İmleç yeşil alandayken [BOŞLUK] tuşuna bas.</p>
+            <div class="mg-bar">
+                <div class="mg-target" id="kazi-target"></div>
+                <div class="mg-cursor" id="kazi-cursor"></div>
+            </div>
+            <p style="font-size: 12px; color: #aaa;">[ESC] tuşu ile çıkış yapabilirsin.</p>
+        </div>
+
+        <div id="kilit-ekrani" class="minigame-panel">
+            <h2 style="margin-top:0; color: #0ff;">KİLİT KIRMA PROTOKOLÜ</h2>
+            <p>Sistem pimlerini kırmak için yeşil alanda [BOŞLUK] tuşuna bas.</p>
+            <div id="pim-konteyner">
+                <span class="pim" id="pim-1">⚪</span>
+                <span class="pim" id="pim-2">⚪</span>
+                <span class="pim" id="pim-3">⚪</span>
+            </div>
+            <div class="mg-bar">
+                <div class="mg-target" id="kilit-target" style="left: 150px; width: 50px; background: rgba(0, 255, 255, 0.4);"></div>
+                <div class="mg-cursor" id="kilit-cursor"></div>
+            </div>
+            <p style="font-size: 12px; color: #aaa;">Hata yaparsan pimler sıfırlanır!</p>
+        </div>
+
+        <div id="search-panel">
+            <h2 style="color: #ffaa00; margin-top:0; text-align: center;">ODA ARAMASI</h2>
+            <p style="color: #aa8800; font-size: 12px; text-align: center;">Eşyaları arayarak önemli materyalleri bul.</p>
+            <div id="search-grid"></div>
+            <div id="search-result" style="color: #00ff50; font-size: 14px; font-weight:bold; height: 20px; text-align: center;"></div>
+        </div>
+    </div>
+
+    <div id="arayuz">
+        <div class="bilgi-kutusu">GÖREV<br><br><span id="ui-gorev" style="color: #ff0">YEMEKHANEYE GİR VE KAŞIK BUL</span></div>
+        <div class="bilgi-kutusu">ENVANTER<br><br><span id="ui-envanter" style="font-size: 11px;">BOŞ</span></div>
+        <div class="bilgi-kutusu">ALARM SİSTEMİ<br><br><span id="ui-alarm">KAPALI</span></div>
+        <div class="bilgi-kutusu">KAZI İLERLEMESİ<br><br><span id="ui-kazi">%0</span></div>
+    </div>
+
+<script>
+    // --- SES MOTORU ---
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const sesMotoru = new AudioContext();
+
+    function bipCal(frekans, tip, sure, sesSeviyesi = 1) {
+        if (sesMotoru.state === 'suspended') sesMotoru.resume();
+        let osc = sesMotoru.createOscillator();
+        let gain = sesMotoru.createGain();
+        osc.type = tip;
+        osc.frequency.setValueAtTime(frekans, sesMotoru.currentTime);
+        
+        osc.connect(gain);
+        gain.connect(sesMotoru.destination);
+        osc.start();
+        gain.gain.setValueAtTime(sesSeviyesi, sesMotoru.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.00001, sesMotoru.currentTime + sure);
+        osc.stop(sesMotoru.currentTime + sure);
+    }
+
+    function sesKutuAc() { bipCal(600, 'sine', 0.1, 0.5); setTimeout(() => bipCal(800, 'sine', 0.15, 0.5), 100); }
+    function sesKaziVur() { bipCal(150, 'square', 0.1, 0.5); }
+    function sesKilitVur() { bipCal(900, 'sine', 0.1, 0.5); }
+    function sesHata() { bipCal(100, 'sawtooth', 0.2, 0.5); }
+    function sesYakalanma() { bipCal(300, 'sawtooth', 0.3, 0.5); setTimeout(() => bipCal(250, 'sawtooth', 0.3, 0.5), 200); setTimeout(() => bipCal(200, 'sawtooth', 0.5, 0.5), 400); }
+    function sesBasari() { bipCal(400, 'sine', 0.1, 0.5); setTimeout(() => bipCal(600, 'sine', 0.1, 0.5), 150); setTimeout(() => bipCal(800, 'sine', 0.3, 0.5), 300); }
+
+    let alarmDuvardimi = null;
+    function sesAlarmBaslat() {
+        if (alarmDuvardimi) return;
+        let yuksek = true;
+        alarmDuvardimi = setInterval(() => {
+            bipCal(yuksek ? 800 : 600, 'square', 0.4, 0.3);
+            yuksek = !yuksek;
+        }, 500);
+    }
+    function sesAlarmDurdur() {
+        clearInterval(alarmDuvardimi);
+        alarmDuvardimi = null;
+    }
+
+    let bgmDongu = null;
+    let bgmAdim = 0;
+    const bgmNotalar = [110.00, 110.00, 130.81, 110.00, 98.00, 98.00, 103.83, 110.00]; 
+
+    function arkaPlanMuzigiBaslat() {
+        if (bgmDongu) return;
+        bgmAdim = 0;
+        bgmDongu = setInterval(() => {
+            if (sesMotoru.state === 'suspended') return;
+            let osc = sesMotoru.createOscillator();
+            let gain = sesMotoru.createGain();
+            let filtre = sesMotoru.createBiquadFilter();
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(bgmNotalar[bgmAdim % bgmNotalar.length], sesMotoru.currentTime);
+            
+            filtre.type = 'lowpass';
+            filtre.frequency.value = 300; 
+
+            osc.connect(filtre);
+            filtre.connect(gain);
+            gain.connect(sesMotoru.destination);
+
+            osc.start();
+            gain.gain.setValueAtTime(0.04, sesMotoru.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, sesMotoru.currentTime + 0.3);
+            osc.stop(sesMotoru.currentTime + 0.3);
+
+            bgmAdim++;
+        }, 400); 
+    }
+
+    function arkaPlanMuzigiDurdur() {
+        clearInterval(bgmDongu);
+        bgmDongu = null;
+    }
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function menuSekmeGoster(sekmeAdi) {
+        document.getElementById('sekme-kurallar').style.display = 'none';
+        document.getElementById('sekme-kontroller').style.display = 'none';
+        document.getElementById('sekme-' + sekmeAdi).style.display = 'block';
+    }
+
+    let oyunBasladi = false;
+    let donguCalisiyor = false;
+    let baslangicZamani = 0;
+    
+    let secilenZorluk = 'normal';
+    let gardiyanHizCarpani = 1;
+    let kaziCezasi = 10;
+    let alarmHizCarpani = 1.5;
+
+    const durum = {
+        kasikVar: false, 
+        alarmAcik: false, 
+        kaziYuzde: 0, 
+        bitti: false, 
+        mesajZamani: null,
+        haritaVar: false,
+        lazerVar: false
+    };
+
+    const araba = { x: 60, y: 60, w: 20, h: 20, hiz: 3.5, aci: 0 };
+    const tuslar = {};
+
+    window.addEventListener('keydown', e => tuslar[e.key.toLowerCase()] = true);
+    window.addEventListener('keyup', e => tuslar[e.key.toLowerCase()] = false);
+
+    const KARE = 40;
+    const harita = [
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,4,4,0,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0],
+        [0,4,4,0,1,0,0,0,1,0,6,6,6,6,0,1,0,0,0,0,0,0,1,0,2,2,2,2,2,0],
+        [0,1,0,0,1,0,0,0,1,0,6,6,6,6,0,1,0,0,0,0,0,0,1,0,2,2,2,2,2,0],
+        [0,1,1,1,1,0,0,0,1,0,0,7,0,0,0,1,0,0,0,0,0,0,1,0,0,7,0,0,0,0],
+        [0,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+        [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+        [0,1,1,1,1,1,1,1,1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+        [0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,7,1,0],
+        [0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,1,0],
+        [0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,1,0],
+        [0,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+        [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+        [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,0],
+        [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0],
+        [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,3,3,3,3,1,0],
+        [0,1,0,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,3,3,3,3,1,0],
+        [0,1,0,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,7,3,3,3,3,1,0],
+        [0,1,1,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    ];
+
+    let gardiyanlar = []; 
+
+    function carpismaVarMi(nx, ny) {
+        let sol = Math.floor(nx / KARE);
+        let sag = Math.floor((nx + araba.w) / KARE);
+        let ust = Math.floor(ny / KARE);
+        let alt = Math.floor((ny + araba.h) / KARE);
+        
+        if (sol < 0 || sag >= 30 || ust < 0 || alt >= 20) return true;
+        if (harita[ust][sol] === 0 || harita[ust][sag] === 0 || harita[alt][sol] === 0 || harita[alt][sag] === 0 ||
+            harita[ust][sol] === 7 || harita[ust][sag] === 7 || harita[alt][sol] === 7 || harita[alt][sag] === 7) return true;
+        return false;
+    }
+
+    function mesajGoster(msg) {
+        let notif = document.getElementById('bildirim');
+        notif.innerText = msg;
+        notif.style.display = 'block';
+        clearTimeout(durum.mesajZamani);
+        durum.mesajZamani = setTimeout(() => { notif.style.display = 'none'; }, 3000);
+    }
+
+    function guncelleUI() {
+        let gorev = "YEMEKHANEDEN KAŞIK BUL (R)";
+        if(durum.kasikVar) gorev = "ALARM ODASINA GİT VE TETİKLE (R)";
+        if(durum.alarmAcik) gorev = "HÜCREDE KAZI YAP (E)";
+        
+        document.getElementById('ui-gorev').innerText = gorev;
+        
+        let envanter = [];
+        if(durum.kasikVar) envanter.push("KAŞIK");
+        if(durum.haritaVar) envanter.push("HARİTA");
+        if(durum.lazerVar) envanter.push("LAZER");
+        document.getElementById('ui-envanter').innerText = envanter.length > 0 ? envanter.join(", ") : "BOŞ";
+        
+        document.getElementById('ui-alarm').innerText = durum.alarmAcik ? "TETİKLENDİ" : "KAPALI";
+        document.getElementById('ui-alarm').style.color = durum.alarmAcik ? "#f00" : "#0f0";
+        document.getElementById('ui-kazi').innerText = "%" + durum.kaziYuzde;
+    }
+
+    // Arama Ekranı (Odalar için Dinamik)
+    let aramaAcik = false;
+    function aramaEkraniniAc(odaTipi) {
+        aramaAcik = true;
+        document.getElementById('search-panel').classList.add('visible');
+        let grid = document.getElementById('search-grid');
+        grid.innerHTML = '';
+        document.getElementById('search-result').innerText = '';
+        
+        let ogeListesi = ['🍎','🥕','🍞','🥩','🧅','🥦','🍋','🥫','🍌'];
+        let ozelEsya = '🥄';
+        let basariMesaji = "KAŞIK BULUNDU! Kırmızı Alarm Odasına Git.";
+
+        if(odaTipi === 5) { 
+            ozelEsya = '🔧';
+            basariMesaji = "LAZER KESİCİ BULUNDU! Kazı cezan azaldı.";
+        } else if (odaTipi === 6) { 
+            ozelEsya = '🗺️';
+            basariMesaji = "GÜVENLİK HARİTASI BULUNDU! Görüş alanın arttı.";
+        }
+        
+        ogeListesi.push(ozelEsya);
+        let karisik = ogeListesi.sort(() => 0.5 - Math.random());
+        
+        karisik.forEach(oge => {
+            let hucre = document.createElement('div');
+            hucre.className = 'search-cell';
+            hucre.innerText = '?';
+            hucre.onclick = () => {
+                if (hucre.classList.contains('revealed')) return;
+                hucre.innerText = oge;
+                hucre.classList.add('revealed');
+                sesKutuAc();
+                
+                if (oge === ozelEsya) {
+                    document.getElementById('search-result').innerText = basariMesaji;
+                    if(odaTipi === 2) durum.kasikVar = true;
+                    if(odaTipi === 5) durum.lazerVar = true;
+                    if(odaTipi === 6) durum.haritaVar = true;
+                    
+                    guncelleUI();
+                    setTimeout(() => {
+                        document.getElementById('search-panel').classList.remove('visible');
+                        aramaAcik = false;
+                    }, 1500);
+                } else {
+                    document.getElementById('search-result').innerText = "GEREKSİZ EŞYA.";
+                    document.getElementById('search-result').style.color = "#888";
+                }
+            };
+            grid.appendChild(hucre);
+        });
+    }
+
+    // Mini Oyun Değişkenleri
+    let kaziAcik = false;
+    let kaziX = 0; let kaziYon = 4;
+    
+    let kilitAcik = false;
+    let kilitX = 0; let kilitYon = 5;
+    let kilitPim = 0;
+    let kilitHedefX = 0; let kilitHedefY = 0;
+
+    function pimUI() {
+        document.getElementById('pim-1').className = kilitPim >= 1 ? 'pim aktif' : 'pim';
+        document.getElementById('pim-2').className = kilitPim >= 2 ? 'pim aktif' : 'pim';
+        document.getElementById('pim-3').className = kilitPim >= 3 ? 'pim aktif' : 'pim';
+    }
+
+    window.addEventListener('keydown', e => {
+        if (!oyunBasladi) return;
+
+        let mx = Math.floor((araba.x + 10) / KARE);
+        let my = Math.floor((araba.y + 10) / KARE);
+        let zemin = harita[my][mx];
+
+        // Etkileşimler
+        if (e.key.toLowerCase() === 'r') {
+            if ((zemin === 2 || zemin === 5 || zemin === 6) && !aramaAcik && !kaziAcik && !kilitAcik) {
+                if(zemin === 2 && durum.kasikVar) return; 
+                if(zemin === 5 && durum.lazerVar) return;
+                if(zemin === 6 && durum.haritaVar) return;
+                aramaEkraniniAc(zemin);
+            } 
+            else if (zemin === 3 && durum.kasikVar && !durum.alarmAcik) {
+                durum.alarmAcik = true;
+                mesajGoster("ALARM TETİKLENDİ! Gardiyanlar hızlandı, Hücrene (E) dön!");
+                arkaPlanMuzigiDurdur(); 
+                sesAlarmBaslat();
+                gardiyanlar.forEach(g => g.hiz *= alarmHizCarpani);
+                guncelleUI();
+            }
+            else if (!aramaAcik && !kaziAcik && !kilitAcik) {
+                let yonler = [[0,-1], [0,1], [-1,0], [1,0]];
+                for(let yon of yonler) {
+                    let tx = mx + yon[0]; let ty = my + yon[1];
+                    if (harita[ty] && harita[ty][tx] === 7) {
+                        kilitHedefX = tx; kilitHedefY = ty;
+                        kilitAcik = true;
+                        kilitPim = 0;
+                        pimUI();
+                        document.getElementById('kilit-ekrani').style.display = 'block';
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (e.key.toLowerCase() === 'e') {
+            if (zemin === 4 && durum.kasikVar && durum.alarmAcik && !kaziAcik && !aramaAcik && !kilitAcik) {
+                kaziAcik = true;
+                document.getElementById('kazi-ekrani').style.display = 'block';
+            }
+        }
+
+        // Mini Oyun Kontrolleri (SPACE)
+        if (e.code === 'Space') {
+            if(kaziAcik && !durum.bitti) {
+                e.preventDefault();
+                if (kaziX >= 140 && kaziX <= 210) {
+                    durum.kaziYuzde += 10;
+                    mesajGoster("BAŞARILI VURUŞ! +%10");
+                    sesKaziVur();
+                } else {
+                    let ceza = durum.lazerVar ? Math.floor(kaziCezasi / 2) : kaziCezasi;
+                    durum.kaziYuzde = Math.max(0, durum.kaziYuzde - ceza);
+                    mesajGoster(`KAÇIRDIN! -%${ceza}`);
+                    sesHata();
+                }
+                guncelleUI();
+
+                if (durum.kaziYuzde >= 100) {
+                    durum.bitti = true;
+                    sesAlarmDurdur(); arkaPlanMuzigiDurdur(); sesBasari();
+                    kaziAcik = false;
+                    document.getElementById('kazi-ekrani').style.display = 'none';
+                    let sn = Math.floor((Date.now() - baslangicZamani) / 1000);
+                    alert(`TÜNELİ KAZDIN VE KAÇTIN!\n\nZorluk: ${secilenZorluk.toUpperCase()}\nSüre: ${Math.floor(sn/60)} dk ${sn%60} sn`);
+                    oyunuSifirla(); 
+                }
+            }
+            
+            else if(kilitAcik) {
+                e.preventDefault();
+                if (kilitX >= 150 && kilitX <= 200) {
+                    kilitPim++;
+                    sesKilitVur();
+                    pimUI();
+                    if(kilitPim >= 3) {
+                        harita[kilitHedefY][kilitHedefX] = 1; 
+                        mesajGoster("KAPI KİLİDİ AÇILDI!");
+                        sesKutuAc();
+                        kilitAcik = false;
+                        document.getElementById('kilit-ekrani').style.display = 'none';
+                    }
+                } else {
+                    kilitPim = 0;
+                    pimUI();
+                    mesajGoster("PİM KIRILDI! Baştan başlıyorsun.");
+                    sesHata();
+                }
+            }
+        }
+
+        if (e.key === 'Escape') {
+            if (kaziAcik) { kaziAcik = false; document.getElementById('kazi-ekrani').style.display = 'none'; }
+            if (kilitAcik) { kilitAcik = false; document.getElementById('kilit-ekrani').style.display = 'none'; }
+            if (aramaAcik) { aramaAcik = false; document.getElementById('search-panel').classList.remove('visible'); }
+        }
+    });
+
+    function oyunGuncelle() {
+        if (durum.bitti) return;
+        
+        let arabaHareketEdebilir = !kaziAcik && !aramaAcik && !kilitAcik;
+
+        if (arabaHareketEdebilir) {
+            let nx = araba.x; let ny = araba.y;
+            let hareketVar = false;
+
+            if (tuslar['w']) { ny -= araba.hiz; hareketVar = true; }
+            if (tuslar['s']) { ny += araba.hiz; hareketVar = true; }
+            if (tuslar['a']) { nx -= araba.hiz; hareketVar = true; }
+            if (tuslar['d']) { nx += araba.hiz; hareketVar = true; }
+
+            if (hareketVar) araba.aci = Math.atan2(ny - araba.y, nx - araba.x);
+            if (!carpismaVarMi(nx, araba.y)) araba.x = nx;
+            if (!carpismaVarMi(araba.x, ny)) araba.y = ny;
+        }
+
+        if (kaziAcik) {
+            kaziX += kaziYon;
+            if (kaziX > 350 || kaziX < 0) kaziYon *= -1;
+            document.getElementById('kazi-cursor').style.left = kaziX + 'px';
+        }
+        if (kilitAcik) {
+            kilitX += kilitYon;
+            if (kilitX > 350 || kilitX < 0) kilitYon *= -1;
+            document.getElementById('kilit-cursor').style.left = kilitX + 'px';
+        }
+
+        gardiyanlar.forEach(g => {
+            if (g.eksen === 'x') {
+                g.x += g.hiz * g.yon;
+                if (g.x > g.max || g.x < g.min) g.yon *= -1;
+            } else {
+                g.y += g.hiz * g.yon;
+                if (g.y > g.max || g.y < g.min) g.yon *= -1;
+            }
+
+            let mesafe = Math.hypot((araba.x + 10) - (g.x + 10), (araba.y + 10) - (g.y + 10));
+            if (mesafe < 20) {
+                mesajGoster("GARDİYANA YAKALANDIN! Tüm ilerleme ve eşyalar sıfırlandı.");
+                sesYakalanma();
+                
+                araba.x = 60; araba.y = 60; araba.aci = 0; // Doğru hücre koordinatına dönüş
+                durum.kaziYuzde = 0; durum.kasikVar = false; durum.lazerVar = false; durum.haritaVar = false;
+                
+                if (durum.alarmAcik) {
+                    durum.alarmAcik = false;
+                    sesAlarmDurdur(); arkaPlanMuzigiBaslat();
+                    gardiyanlar.forEach(g_reset => g_reset.hiz /= alarmHizCarpani);
+                }
+                
+                kaziAcik = false; kilitAcik = false; aramaAcik = false;
+                document.getElementById('kazi-ekrani').style.display = 'none';
+                document.getElementById('kilit-ekrani').style.display = 'none';
+                document.getElementById('search-panel').classList.remove('visible');
+                guncelleUI();
+            }
+        });
+    }
+
+    function oyunCiz() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        let kameraX = Math.max(0, Math.min(araba.x - canvas.width / 2, (30 * KARE) - canvas.width));
+        let kameraY = Math.max(0, Math.min(araba.y - canvas.height / 2, (20 * KARE) - canvas.height));
+
+        ctx.save();
+        ctx.translate(-kameraX, -kameraY);
+
+        for (let y = 0; y < 20; y++) {
+            for (let x = 0; x < 30; x++) {
+                let t = harita[y][x];
+                if (t === 0) ctx.fillStyle = '#111';
+                else if (t === 1) ctx.fillStyle = '#222';
+                else if (t === 2) ctx.fillStyle = '#1a3350';
+                else if (t === 3) ctx.fillStyle = '#4a1111';
+                else if (t === 4) ctx.fillStyle = '#333311';
+                else if (t === 5) ctx.fillStyle = '#4a1a50';
+                else if (t === 6) ctx.fillStyle = '#1a504a';
+                else if (t === 7) ctx.fillStyle = '#663300'; 
+
+                ctx.fillRect(x * KARE, y * KARE, KARE, KARE);
+                ctx.strokeStyle = '#000';
+                ctx.strokeRect(x * KARE, y * KARE, KARE, KARE);
+
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.font = '10px Arial';
+                if (t === 2) ctx.fillText("YEMEK", x * KARE + 5, y * KARE + 25);
+                if (t === 3) ctx.fillText("ALARM", x * KARE + 5, y * KARE + 25);
+                if (t === 4) ctx.fillText("HÜCRE", x * KARE + 5, y * KARE + 25);
+                if (t === 5) ctx.fillText("EKİPMAN", x * KARE + 2, y * KARE + 25);
+                if (t === 6) ctx.fillText("TOPLANTI", x * KARE + 0, y * KARE + 25);
+                if (t === 7) ctx.fillText("KAPI", x * KARE + 5, y * KARE + 25);
+            }
+        }
+
+        gardiyanlar.forEach(g => {
+            ctx.fillStyle = durum.alarmAcik ? '#f00' : '#f80';
+            ctx.beginPath();
+            ctx.arc(g.x + 10, g.y + 10, 10, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        ctx.save();
+        ctx.translate(araba.x + 10, araba.y + 10);
+        ctx.rotate(araba.aci);
+        ctx.fillStyle = '#0f0'; ctx.fillRect(-10, -10, 20, 20);
+        ctx.fillStyle = '#fff'; ctx.fillRect(6, -8, 4, 4); ctx.fillRect(6, 4, 4, 4);
+        ctx.restore();
+
+        let gorusAcisi = durum.haritaVar ? 450 : 300;
+        let fener = ctx.createRadialGradient(araba.x + 10, araba.y + 10, 40, araba.x + 10, araba.y + 10, gorusAcisi);
+        fener.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        fener.addColorStop(1, 'rgba(0, 0, 0, 0.98)');
+        ctx.fillStyle = fener;
+        ctx.fillRect(0, 0, 30 * KARE, 20 * KARE); 
+
+        ctx.restore();
+
+        if (durum.alarmAcik) {
+            ctx.fillStyle = `rgba(255, 0, 0, ${Math.abs(Math.sin(Date.now() * 0.005)) * 0.15})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+    }
+
+    function oyunuSifirla() {
+        oyunBasladi = false;
+        durum.kasikVar = false; durum.alarmAcik = false; durum.kaziYuzde = 0; durum.bitti = false;
+        durum.lazerVar = false; durum.haritaVar = false;
+        araba.x = 60; araba.y = 60; araba.aci = 0; // GÜVENLİ HÜCRE KOORDİNATI
+        
+        harita[4][11] = 7; 
+        harita[4][25] = 7; 
+        harita[18][3] = 7; 
+        harita[17][23] = 7;
+
+        sesAlarmDurdur(); arkaPlanMuzigiDurdur();
+        document.getElementById('ana-menu').style.display = 'flex';
+        guncelleUI();
+    }
+
+    function oyunuBaslat(zorluk) {
+        sesMotoru.resume(); 
+        arkaPlanMuzigiBaslat(); 
+
+        secilenZorluk = zorluk;
+        let min1, max1, min2, max2, min3, max3;
+
+        if (zorluk === 'kolay') { 
+            gardiyanHizCarpani = 0.6; alarmHizCarpani = 1.2; kaziCezasi = 5; 
+            min1 = 300; max1 = 600; min2 = 400; max2 = 800; min3 = 200; max3 = 400;
+        } else if (zorluk === 'zor') { 
+            gardiyanHizCarpani = 1.5; alarmHizCarpani = 2.0; kaziCezasi = 20; 
+            min1 = 50; max1 = 1100; min2 = 50; max2 = 1150; min3 = 50; max3 = 700;
+        } else { 
+            gardiyanHizCarpani = 1; alarmHizCarpani = 1.5; kaziCezasi = 10; 
+            min1 = 200; max1 = 900; min2 = 100; max2 = 1000; min3 = 100; max3 = 600;
+        }
+
+        gardiyanlar = [
+            { x: 400, y: 200, hiz: 2 * gardiyanHizCarpani, eksen: 'x', yon: 1, min: min1, max: max1 },
+            { x: 600, y: 440, hiz: 2.5 * gardiyanHizCarpani, eksen: 'x', yon: -1, min: min2, max: max2 },
+            { x: 760, y: 200, hiz: 2 * gardiyanHizCarpani, eksen: 'y', yon: 1, min: min3, max: max3 }
+        ];
+
+        document.getElementById('ana-menu').style.display = 'none';
+        baslangicZamani = Date.now();
+        oyunBasladi = true; durum.bitti = false;
+        mesajGoster(`SİSTEME GİRİŞ YAPILDI. ZORLUK: ${zorluk.toUpperCase()}`);
+        
+        if (!donguCalisiyor) { donguCalisiyor = true; dongu(); }
+    }
+
+    function dongu() {
+        if (oyunBasladi && !durum.bitti) { oyunGuncelle(); oyunCiz(); }
+        requestAnimationFrame(dongu);
+    }
+
+    oyunCiz();
+</script>
+
+</body>
+</html>

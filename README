@@ -1,0 +1,81 @@
+# 🚨 Hapishane Kaçış: Robo-Hacker (Oyun Geliştirme Projesi)
+
+**Bursa Teknik Üniversitesi - Web Tabanlı Programlama Dersi Projesi**
+
+HTML5 Canvas ve Vanilla (Saf) JavaScript kullanılarak geliştirilmiş, 2 boyutlu, yukarıdan bakışlı (top-down) gizlilik ve hayatta kalma (stealth-survival) oyunudur.
+
+## 🎮 Oyna (Live Demo)
+Oyunumuzu tarayıcı üzerinden oynamak için aşağıdaki bağlantıya tıklayabilirsiniz:
+👉 **[OYNAMAK İÇİN TIKLAYIN (GitHub Pages / Itch.io Linkinizi Buraya Ekleyin)](https://kullaniciadi.github.io/repo-adi)**
+
+*(Not: Oyun Google Chrome ve Mozilla Firefox tarayıcılarında sorunsuz çalışacak şekilde optimize edilmiştir.)*
+
+---
+
+## 📸 Ekran Görüntüleri
+*(Puanlama Kriteri: En az 2 oyun içi görüntü)*
+
+![Ana Menü] ![alt text](image-1.png)
+*Görsel 1: Ana Menü ve Dinamik Zorluk Seçimi Ekranı*
+*(Not: Github reponuzda 'docs' adında bir klasör açıp içine menu.png ve gameplay.png adında 2 resim atın ve burayı güncelleyin)*
+
+![Oyun İçi]![alt text](image-2.png)
+*Görsel 2: Oyun İçi (Fog of War) Görüş Konileri, Arama Mekaniği ve Kilit Kırma/Kazı Arayüzü*
+
+---
+
+## 🎯 İlham Alınan Orijinal Oyun
+Bu proje, kurallar gereği son 5 yılda Itch.io "Game Jam" yarışmalarında ilk %10'a giren aşağıdaki oyundan ilham alınarak geliştirilmiştir:
+
+* **Orijinal Oyun Adı:** [Orijinal Oyunun Adı Buraya]
+* **Orijinal Oyun Bağlantısı:** [https://burnsboy.itch.io/rc-robo-crawler]
+* **Uyarlanan Temel Mekanik:** Orijinal oyundaki "düşman görüş alanından (ışık konilerinden) kaçarak sınırlı sürede görev yapma" temel mekaniği alınmış; HTML5 Canvas üzerinde yepyeni bir hikaye (Hapishaneden kaçan bir Robo-Araç) ve tünel kazma/kilit kırma gibi özgün "mini-game" mekanikleriyle birleştirilerek baştan yazılmıştır.
+
+---
+
+## 🕹️ Hedef ve Zorluklar (Challenge)
+
+### Oyunun Amacı
+Sen, hapishaneden kaçmak için küçük bir "Robo-Hacker" aracını uzaktan kumanda eden bir mahkumsun.
+**Nihai Hedef:** Gardiyanlara yakalanmadan hapishaneden kaçmaktır. Bunun için sırasıyla şunları yapmalısın:
+1. Kapalı odaların **kilitlerini kırarak** (Mini-Game) içeri sız.
+2. **Yemekhanedeki (Mavi)** masaları arayarak tünel kazmak için **Kaşık** bul.
+3. **Alarm Odasına (Kırmızı)** gidip güvenlik sistemini tetikle ve kaosu başlat.
+4. Kendi **Hücrene (Sarı)** dön, **Tünel Kazı** işlemini %100'e getir ve kaçışı tamamla!
+
+### Zorluk (Challenge)
+* **Dinamik Yapay Zeka:** Gardiyanlar devriye gezer. Alarm tetiklendiğinde hızları ve devriye alanları artar.
+* **Sıfırlanma:** Gardiyanlara yakalanırsan hücreye geri dönersin ve *tüm ilerlemen, eşyaların ve kazı oranın sıfırlanır*.
+* **Görüş Kısıtlaması (Fog of War):** Etraf zifiri karanlıktır, sadece arabanın feneri kadar bir alanı görebilirsin. Ekipman odalarından Harita veya Lazer bularak yeteneklerini geliştirmelisin.
+
+---
+
+## ⌨️ Tuş Kontrolleri
+* **[ W, A, S, D ] :** Aracı yukarı, sola, aşağı ve sağa yönlendirir. Araba hareket ettiği yöne otomatik döner.
+* **[ R ] :** Etkileşim Tuşu. Kapı kilitlerini kırma ekranını açar, odalarda eşya arar veya alarmı tetikler.
+* **[ E ] :** Hücreye dönüldüğünde "Tünel Kazma" mini-oyununu başlatır.
+* **[ BOŞLUK (Space) ] :** Mini-oyunlarda (Kilit kırarken veya tünel kazarken) hareket eden imleç yeşil hedefin üzerindeyken çekiç vurmayı sağlar.
+* **[ ESC ] :** Açık olan etkileşim / mini-oyun ekranlarını kapatır.
+
+---
+
+## 🛠️ Kullanılan Teknolojiler ve Kurallara Uygunluk
+
+* **Çizim Motoru:** Sadece **HTML5 `<canvas>`** API (`fillRect`, `createRadialGradient`, `arc` vb.) kullanılmıştır.
+* **Programlama Dili:** **Vanilla (Saf) JavaScript** kullanılmıştır. Hiçbir hazır oyun kütüphanesi (Phaser, PixiJS, Unity vb.) **KULLANILMAMIŞTIR**.
+* **Ses Sistemi:** Oyun içi arka plan müziği (BGM) ve etkileşim sesleri (SFX), dışarıdan hiçbir MP3 dosyası kullanılmadan, JavaScript **Web Audio API (`AudioContext`, `OscillatorNode`)** kullanılarak tamamen kodla sentezlenmiştir (Procedural Audio).
+* **Tek Sayfa Yapısı:** Proje kurallara uygun olarak tek bir `index.html` dosyası içinde çalışmaktadır.
+
+---
+
+## 📦 Varlıklar (Assets) ve Kaynakça
+* **Grafikler:** Oyundaki harita, karakterler, ışık hüzmeleri ve UI elemanlarının tamamı JavaScript Canvas API ile kod yazılarak geometrik olarak çizilmiştir. Dışarıdan PNG/JPG kullanılmamıştır.
+* **Sesler:** Kod kullanılarak JavaScript ile üretilmiştir.
+* **Yapay Zeka Kullanımı:** Proje geliştirilirken karşılaşılan hataların çözümü ve bazı matematiksel algoritmaların (Canvas Viewport / Çarpışma testleri) optimizasyonu için yapay zeka araçlarından destek alınmıştır. **Kullanılan tüm promptlar ve alınan cevaplar, repomuzda bulunan `AI.md` dosyasında detaylıca belgelenmiştir.**
+
+---
+
+## 👥 Grup Üyeleri ve Sorumluluklar
+
+| Öğrenci No | Ad Soyad | Sorumluluk 
+| :22360859372 | :Emre Karaömer | :Projenin tamamı |
